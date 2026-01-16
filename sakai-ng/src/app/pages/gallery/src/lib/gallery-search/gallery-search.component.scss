@@ -1,0 +1,151 @@
+// Header: Làm gọn gàng hơn trên mobile
+.header-container {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #f8faff;
+    padding: 10px 12px;
+    border-bottom: 1px solid #bfdbfe;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.06);
+    transition: all 0.3s ease;
+
+    @media (max-width: 768px) {
+        padding: 8px 10px;
+    }
+}
+
+// Flex header: Cho phép xuống dòng tự nhiên
+.flex.align-items-center.gap-2.mb-3.flex-wrap {
+    flex-wrap: wrap;
+    gap: 8px !important;
+
+    @media (max-width: 768px) {
+        gap: 6px;
+        justify-content: space-between;
+    }
+}
+
+// Nút: To hơn, bo tròn, dễ chạm
+.p-button {
+    border-radius: 12px;
+    min-height: 44px;               // Chuẩn touch mobile
+    min-width: 44px;
+    font-size: 0.95rem;
+    padding: 0.6rem 1rem;
+    transition: all 0.2s ease;
+
+    @media (max-width: 768px) {
+        font-size: 1rem;
+        padding: 0.7rem 1.2rem;
+        min-height: 48px;
+    }
+
+    .p-button-label {
+        margin-left: 6px;
+    }
+}
+
+// Nút cụ thể (làm nổi bật nhưng không lấn át)
+.p-button[icon="pi pi-trash"] {
+    background: #ef4444 !important;   // Đỏ nhẹ cho Xóa
+    border-color: #dc2626;
+}
+
+.p-button[icon="pi pi-folder-plus"] {
+    background: #10b981 !important;   // Xanh lá cho Tạo
+    border-color: #059669;
+}
+
+.p-fileupload .p-button {
+    background: #3b82f6 !important;   // Xanh dương cho Upload
+    border-color: #2563eb;
+}
+
+// Grid: Linh hoạt hơn
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 16px;
+    padding: 16px;
+
+    @media (max-width: 768px) {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 12px;
+        padding: 12px;
+    }
+
+    @media (max-width: 480px) {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        padding: 10px;
+    }
+}
+
+// Item: To hơn, bo góc mềm, hover/click đẹp
+.item {
+    text-align: center;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.25s ease;
+    aspect-ratio: 1 / 1.3;          // Giữ tỷ lệ đẹp
+    overflow: hidden;
+
+    @media (max-width: 768px) {
+        padding: 8px;
+    }
+
+    &:hover, &:active {
+        transform: translateY(-4px) scale(1.03);
+        box-shadow: 0 8px 20px rgba(59,130,246,0.15);
+        background: #f8faff;
+    }
+}
+
+// Thumb & Folder icon: To hơn trên mobile
+.thumb {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    transition: transform 0.3s;
+
+    @media (max-width: 768px) {
+        height: 70px;
+    }
+
+    .item:hover & {
+        transform: scale(1.08);
+    }
+}
+
+.folder-icon {
+    font-size: 52px;
+    color: #60a5fa;
+    margin-bottom: 10px;
+    transition: transform 0.3s;
+
+    @media (max-width: 768px) {
+        font-size: 44px;
+    }
+
+    .item:hover & {
+        transform: scale(1.12) rotate(8deg);
+    }
+}
+
+// Tên thư mục/file: To hơn, xuống dòng đẹp
+.name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    line-height: 1.3;
+    padding: 0 4px;
+
+    @media (max-width: 768px) {
+        font-size: 12px;
+    }
+}

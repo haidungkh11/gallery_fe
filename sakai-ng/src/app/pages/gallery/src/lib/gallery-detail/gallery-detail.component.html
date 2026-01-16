@@ -1,0 +1,43 @@
+<p-dialog
+    header="Xem nội dung"
+    [(visible)]="visible"
+    [modal]="true"
+    [style]="{ width: '70vw' }"
+    [contentStyle]="{ overflow: 'hidden' }"
+    (onHide)="close()">
+
+    <div class="preview-wrapper">
+        <!-- Nút Prev -->
+        <button
+            *ngIf="currentIndex > 0"
+            pButton
+            icon="pi pi-chevron-left"
+            class="p-button-text p-button-rounded prev-btn"
+            (click)="goPrev()"
+            [disabled]="currentIndex === 0">
+        </button>
+
+        <!-- IMAGE -->
+        <img
+            *ngIf="media?.type === 'IMAGE'"
+            [src]="media.url"
+            class="preview-media" />
+
+        <!-- VIDEO -->
+        <video
+            *ngIf="media?.type === 'VIDEO'"
+            [src]="media.url"
+            controls
+            class="preview-media">
+        </video>
+        <button
+            *ngIf="currentIndex < mediaList.length - 1"
+            pButton
+            icon="pi pi-chevron-right"
+            class="p-button-text p-button-rounded next-btn"
+            (click)="goNext()"
+            [disabled]="currentIndex === mediaList.length - 1">
+        </button>
+    </div>
+
+</p-dialog>

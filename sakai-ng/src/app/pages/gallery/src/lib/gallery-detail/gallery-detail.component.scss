@@ -1,0 +1,87 @@
+:host {
+    ::ng-deep .p-dialog {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+}
+
+/* Wrapper chính */
+.preview-wrapper {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #000;
+    touch-action: none; // 🔥 Bắt gesture tốt hơn
+}
+
+/* Media (image / video) */
+.preview-media {
+    max-width: 100%;
+    max-height: 100%;
+
+    width: auto;
+    height: auto;
+
+    object-fit: contain;
+    display: block;
+}
+
+/* Nút prev / next */
+.prev-btn,
+.next-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    color: white;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.prev-btn {
+    left: 10px;
+}
+
+.next-btn {
+    right: 10px;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 2200px) {
+
+    :host {
+        ::ng-deep .p-dialog {
+            width: 100vw !important;
+            height: 100vh;
+            margin: 0;
+            max-height: 100%;
+            border-radius: 0;
+        }
+
+        ::ng-deep .p-dialog-content {
+            padding: 0;
+            height: calc(100vh - 50px);
+        }
+    }
+    .preview-media {
+        height: 100%;
+        position: absolute;
+        width: 100%;
+
+    }
+
+    .preview-wrapper {
+        height: 100%;
+    }
+
+    .prev-btn,
+    .next-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+}

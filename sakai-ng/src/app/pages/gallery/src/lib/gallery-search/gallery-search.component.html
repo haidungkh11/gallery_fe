@@ -1,0 +1,153 @@
+<p-toast />
+<div class="card">
+    <div class="header-container">
+        <div class="flex align-items-center gap-2 mb-3 flex-wrap">
+            <button
+                pButton
+                icon="pi pi-arrow-left"
+                label="Back"
+                (click)="goBack()"
+                [hidden]="navigationStack.length === 0">
+            </button>
+
+            <span class="font-semibold text-lg">📂 Explorer</span>
+
+            <!-- Multi-select controls -->
+            <div class="flex gap-2 ml-auto">
+                <!-- Nút bật chế độ chọn -->
+                <p-button
+                    *ngIf="!multiSelectMode"
+                    icon="pi pi-check-square"
+                    label="Xóa"
+                    (click)="toggleMultiSelect()"
+                    class="p-button-outlined">
+                </p-button>
+
+                <!-- Controls khi đang ở chế độ chọn -->
+                <ng-container *ngIf="multiSelectMode">
+                    <p-button icon="pi pi-check" label="Chọn tất cả" (click)="selectAll()" class="p-button-text"></p-button>
+                    <p-button icon="pi pi-times" label="Hủy" severity="secondary" (click)="toggleMultiSelect()" class="p-button-text"></p-button>
+                    <p-button
+                        icon="pi pi-trash"
+                        label="Xóa ({{ selectedItems.length }})"
+                        severity="danger"
+                        (click)="confirmDelete()"
+                        [disabled]="selectedItems.length === 0 || deleteInProgress"
+                        [loading]="deleteInProgress">
+                    </p-button>
+                </ng-container>
+
+                <!-- Tạo thư mục & Upload (giữ nguyên vị trí bên phải) -->
+                <p-button
+                    icon="pi pi-folder-plus"
+                    label="Tạo thư mục"
+                    severity="success"
+                    (click)="openCreateFolderDialog()"
+                    class="p-button-outlined">
+                </p-button>
+
+                <p-fileUpload
+                    mode="basic"
+                    name="galleryFiles[]"
+                    chooseLabel="Upload ảnh/video"
+                    accept="image/*,video/*"
+                    [multiple]="true"
+                    [auto]="true"
+                    customUpload="true"
+                    (uploadHandler)="uploadFiles($event)">
+                </p-fileUpload>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Grid items -->
+    <div class="grid">
+        <div
+            class="item relative cursor-pointer"
+            *ngFor="let item of currentItems"
+            (click)="openItem(item)">
+
+            <!-- Checkbox chỉ hiện khi multiSelectMode = true -->
+            <div *ngIf="multiSelectMode" class="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 shadow-md">
+                <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isSelected(item)"
+                    (ngModelChange)="toggleSelection(item)"
+                    [inputId]="'chk-' + item.id">
+                </p-checkbox>
+            </div>
+
+            <!-- Overlay nhẹ khi item được chọn -->
+            <div *ngIf="multiSelectMode && isSelected(item)"
+                 class="absolute inset-0 bg-blue-500/15 rounded-lg pointer-events-none"></div>
+
+            <i *ngIf="item.type === 'FOLDER'" class="pi pi-folder folder-icon"></i>
+            <img *ngIf="item.type === 'IMAGE'" [src]="item.url" loading="lazy" class="thumb" />
+            <video *ngIf="item.type === 'VIDEO'" [src]="item.url" muted class="thumb"></video>
+            <div class="name">{{ item.name }}</div>
+        </div>
+    </div>
+
+    <!-- Dialog tạo thư mục (giữ nguyên) -->
+    <p-dialog
+        header="Tạo thư mục mới"
+        [(visible)]="showCreateFolderDialog"
+        [modal]="true"
+        [style]="{ width: '420px' }"
+        [draggable]="true"
+        [resizable]="false">
+
+        <div class="p-fluid">
+            <div class="field mt-4">
+                <label for="folderName" class="block text-lg font-medium mb-3">Tên thư mục</label>
+                <input
+                    pInputText
+                    id="folderName"
+                    [(ngModel)]="newFolderName"
+                    placeholder="Nhập tên thư mục mới..."
+                    class="w-full p-inputtext-lg"
+                    autofocus
+                    style="height: 48px; font-size: 1.1rem;"
+                />
+                <small class="p-error block mt-2" *ngIf="folderNameError">
+                    {{ folderNameError }}
+                </small>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-end gap-3 mt-5">
+                <p-button label="Hủy" severity="secondary" text (click)="showCreateFolderDialog = false"></p-button>
+                <p-button label="Tạo thư mục" icon="pi pi-check" (click)="createFolder()"></p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Dialog xác nhận xóa -->
+    <p-dialog
+        header="Xác nhận xóa"
+        [(visible)]="showDeleteConfirm"
+        [modal]="true"
+        [style]="{ width: '400px' }"
+        [closable]="false">
+
+        <p>Bạn có chắc chắn muốn xóa <strong>{{ selectedItems.length }}</strong> mục đã chọn?</p>
+        <p class="text-red-500 mt-2">Hành động này không thể hoàn tác (trong dữ liệu tạm thời).</p>
+
+        <ng-template pTemplate="footer">
+            <p-button label="Hủy" severity="secondary" (click)="cancelDelete()" [disabled]="deleteInProgress"></p-button>
+            <p-button label="Xóa" severity="danger" (click)="deleteSelected()" [loading]="deleteInProgress"></p-button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Preview giữ nguyên -->
+    <app-gallery-detail
+        [media]="selectedMedia"
+        [(visible)]="previewVisible"
+        [mediaList]="mediaList"
+        [currentIndex]="currentIndex"
+        (prev)="onPrev()"
+        (next)="onNext()">
+    </app-gallery-detail>
+</div>
