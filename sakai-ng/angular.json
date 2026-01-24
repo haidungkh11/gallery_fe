@@ -58,6 +58,13 @@
                             "buildTarget": "sakai-ng:build:development"
                         }
                     },
+                    "options": {
+                        "host" : "0.0.0.0",
+                        "port" : 2432,
+                        "allowedHosts" : [
+                            "ledungserver.ddns.net"
+                        ]
+                    },
                     "defaultConfiguration": "development"
                 },
                 "extract-i18n": {

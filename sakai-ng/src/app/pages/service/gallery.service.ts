@@ -24,18 +24,18 @@ export class GalleryService {
     //     this.csrfToken = this.getCookie('XSRF-TOKEN');
     // }
 
-    private getHeaders(): HttpHeaders {
-        // Construct headers with CSRF token
-        let headers = new HttpHeaders();
-        // if (this.csrfToken) {
-        //     headers = headers.set('X-XSRF-TOKEN', this.csrfToken);
-        // } else {
-        //     this.retrieveCsrfToken();
-        //     headers = headers.set('X-XSRF-TOKEN', this.csrfToken);
-        // }
-        headers = headers.set('RequestId', "assetCustomer_" + crypto.randomUUID());
-        return headers;
-    }
+//     private getHeaders(): HttpHeaders {
+//         // Construct headers with CSRF token
+//         let headers = new HttpHeaders();
+//         // if (this.csrfToken) {
+//         //     headers = headers.set('X-XSRF-TOKEN', this.csrfToken);
+//         // } else {
+//         //     this.retrieveCsrfToken();
+//         //     headers = headers.set('X-XSRF-TOKEN', this.csrfToken);
+//         // }
+//         headers = headers.set('RequestId', "assetCustomer_" + crypto.randomUUID());
+//         return headers;
+//     }
 
     private getCookie(name: string): string {
         const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
