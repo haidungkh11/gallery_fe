@@ -7,6 +7,7 @@ export const environment = {
 
     host: 'localhost:1238',
 
+
     path: '',
 
     serviceUrl: 'http://localhost:1238',

@@ -1,7 +1,8 @@
 <p-toast />
 <div class="card">
     <div class="header-container">
-        <div class="flex align-items-center gap-2 mb-3 flex-wrap">
+        <!-- Row 1: Title -->
+        <div class="header-top">
             <button
                 pButton
                 icon="pi pi-arrow-left"
@@ -10,55 +11,58 @@
                 [hidden]="navigationStack.length === 0">
             </button>
 
-            <span class="font-semibold text-lg">📂 Explorer</span>
+            <span class="font-semibold text-lg">📂 Thư viện ảnh</span>
+        </div>
 
-            <!-- Multi-select controls -->
-            <div class="flex gap-2 ml-auto">
-                <!-- Nút bật chế độ chọn -->
+        <!-- Row 2: Actions -->
+        <div class="header-actions">
+            <!-- Nút bật chọn -->
+            <p-button
+                *ngIf="!multiSelectMode"
+                icon="pi pi-check-square"
+                label="Xóa"
+                (click)="toggleMultiSelect()"
+                class="p-button-outlined">
+            </p-button>
+
+            <ng-container *ngIf="multiSelectMode">
+                <p-button icon="pi pi-check" label="Chọn tất cả" class="p-button-text"
+                          (click)="selectAll()"></p-button>
+
+                <p-button icon="pi pi-times" label="Hủy" severity="secondary"
+                          class="p-button-text"
+                          (click)="toggleMultiSelect()"></p-button>
+
                 <p-button
-                    *ngIf="!multiSelectMode"
-                    icon="pi pi-check-square"
-                    label="Xóa"
-                    (click)="toggleMultiSelect()"
-                    class="p-button-outlined">
+                    icon="pi pi-trash"
+                    label="Xóa ({{ selectedItems.length }})"
+                    severity="danger"
+                    [disabled]="selectedItems.length === 0"
+                    (click)="confirmDelete()">
                 </p-button>
+            </ng-container>
 
-                <!-- Controls khi đang ở chế độ chọn -->
-                <ng-container *ngIf="multiSelectMode">
-                    <p-button icon="pi pi-check" label="Chọn tất cả" (click)="selectAll()" class="p-button-text"></p-button>
-                    <p-button icon="pi pi-times" label="Hủy" severity="secondary" (click)="toggleMultiSelect()" class="p-button-text"></p-button>
-                    <p-button
-                        icon="pi pi-trash"
-                        label="Xóa ({{ selectedItems.length }})"
-                        severity="danger"
-                        (click)="confirmDelete()"
-                        [disabled]="selectedItems.length === 0 || deleteInProgress"
-                        [loading]="deleteInProgress">
-                    </p-button>
-                </ng-container>
+            <p-button
+                icon="pi pi-folder-plus"
+                label="Tạo thư mục"
+                severity="success"
+                class="p-button-outlined"
+                (click)="openCreateFolderDialog()">
+            </p-button>
 
-                <!-- Tạo thư mục & Upload (giữ nguyên vị trí bên phải) -->
-                <p-button
-                    icon="pi pi-folder-plus"
-                    label="Tạo thư mục"
-                    severity="success"
-                    (click)="openCreateFolderDialog()"
-                    class="p-button-outlined">
-                </p-button>
-
-                <p-fileUpload
-                    mode="basic"
-                    name="galleryFiles[]"
-                    chooseLabel="Upload ảnh/video"
-                    accept="image/*,video/*"
-                    [multiple]="true"
-                    [auto]="true"
-                    customUpload="true"
-                    (uploadHandler)="uploadFiles($event)">
-                </p-fileUpload>
-            </div>
+            <p-fileUpload
+                mode="basic"
+                chooseLabel="Upload"
+                name="galleryFiles[]"
+                accept="image/*,video/*"
+                [multiple]="true"
+                [auto]="true"
+                customUpload="true"
+                (uploadHandler)="uploadFiles($event)">
+            </p-fileUpload>
         </div>
     </div>
+
 
 
     <!-- Grid items -->

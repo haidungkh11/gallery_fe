@@ -4,10 +4,13 @@ import { Dashboard } from './app/pages/dashboard/dashboard';
 import { Documentation } from './app/pages/documentation/documentation';
 import { Landing } from './app/pages/landing/landing';
 import { Notfound } from './app/pages/notfound/notfound';
+import {Login} from "@/pages/auth/login";
+import {LoginSearchComponent} from "@/pages/login/src/lib/login-search/login-search.component";
 
 export const appRoutes: Routes = [
+    { path: '', loadChildren: () => import('./app/pages/login/src/lib/login-routing.module') },
     {
-        path: '',
+        path: 'dashboard',
         component: AppLayout,
         children: [
             { path: '', component: Dashboard },
