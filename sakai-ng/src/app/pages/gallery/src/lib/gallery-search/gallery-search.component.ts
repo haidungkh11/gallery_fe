@@ -84,6 +84,7 @@ export class GallerySearchComponent implements OnInit {
             this.mainService.getList().subscribe({
                next: value => {
                    if(value.body){
+                       debugger
                        this.currentItems = value.body.data;
                        this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
                    }
@@ -95,6 +96,7 @@ export class GallerySearchComponent implements OnInit {
             this.mainService.fetch(this._querySearch).subscribe({
                 next: value => {
                     if(value.body){
+                        debugger
                         this.currentItems = value.body.data;
                         this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
                     }

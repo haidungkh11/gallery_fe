@@ -22,6 +22,6 @@ export const appRoutes: Routes = [
     },
     { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
-    { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
+    { path: 'signup', loadChildren: () => import('./app/pages/signup/src/lib/signup-routing.module')},
     { path: '**', redirectTo: '/notfound' }
 ];

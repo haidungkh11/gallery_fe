@@ -13,7 +13,7 @@ import {MessageService} from "primeng/api";
 import {DialogService} from "primeng/dynamicdialog";
 import {Toast} from "primeng/toast";
 import {Password} from "primeng/password";
-import {Router, RouterLink} from "@angular/router";
+import {Router} from "@angular/router";
 import {AppFloatingConfigurator} from "@/layout/component/app.floatingconfigurator";
 import {LoginService} from "@/pages/service/auth.service";
 
@@ -21,7 +21,7 @@ import {LoginService} from "@/pages/service/auth.service";
 
 
 @Component({
-    selector: 'login-search',
+    selector: 'signup-search',
     standalone: true,
     imports: [
         CommonModule,
@@ -31,12 +31,12 @@ import {LoginService} from "@/pages/service/auth.service";
         InputTextModule,
         CheckboxModule,          // Thêm
         FormsModule,
-        Password,
+        Password
     ],
-    templateUrl: './login-search.component.html',
-    styleUrl: 'login-search.component.scss'
+    templateUrl: './signup-search.component.html',
+    styleUrl: 'signup-search.component.scss'
 })
-export class LoginSearchComponent implements OnInit {
+export class SignupSearchComponent implements OnInit {
 
     email: string = '';
 
@@ -65,16 +65,20 @@ export class LoginSearchComponent implements OnInit {
         this.formLogin.password = this.password;
 
 
-        this.mainService.login(this.formLogin).subscribe({
+        this.mainService.signup(this.formLogin).subscribe({
             next: value => {
                 if(value.body){
-                    localStorage.setItem('token',value.body.data);
-                    this.router.navigate(['/dashboard/gallery'])
+                    this.messageService.add({
+                        severity: 'success',
+                        summary:'Đăng kí thành công',
+                        detail: 'Mời đăng nhập lại',
+                        life: 4000,
+                        closable: true
+                    });
+                    this.router.navigate(['/'])
                 }
             },
             error: err => {
-                this.router.navigate(['/']);
-
                 let message = 'Có lỗi xảy ra';
 
                 // Backend trả JSON error
@@ -84,17 +88,13 @@ export class LoginSearchComponent implements OnInit {
 
                 this.messageService.add({
                     severity: 'error',
-                    summary:'Đăng nhập không thành công',
+                    summary:'Đăng kí không thành công',
                     detail: message,
                     life: 4000,
                     closable: true
                 });
             }
         });
-    }
-
-    signup(){
-        this.router.navigate(['/signup']);
     }
 
 }
