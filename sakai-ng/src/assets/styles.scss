@@ -3,3 +3,11 @@
 @use './layout/layout.scss';
 @use 'primeicons/primeicons.css';
 @use './demo/demo.scss';
+
+
+@media (max-width: 991px) {
+    .layout-wrapper.layout-mobile-active .layout-sidebar {
+        transform: translateX(0);
+        z-index: 2000;
+    }
+}
