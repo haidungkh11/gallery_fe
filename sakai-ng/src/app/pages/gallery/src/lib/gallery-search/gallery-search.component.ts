@@ -147,36 +147,47 @@ export class GallerySearchComponent implements OnInit {
         const files = event.files as File[];
         if (!files?.length) return;
 
-        const formData = new FormData();
-        let parentId = this.currentFolderId;
-        if(parentId == null){
-            parentId = -1;
+        // Chỉ lấy image / video
+        const validFiles = files.filter(file =>
+            file.type.startsWith('image/') || file.type.startsWith('video/')
+        );
+
+        // Giới hạn tối đa 10 file
+        if (validFiles.length > 10) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Quá số lượng',
+                detail: 'Chỉ được upload tối đa 10 ảnh hoặc 10 video',
+                life: 4000,
+                closable: true
+            });
+            return;
         }
 
+        const formData = new FormData();
+        let parentId = this.currentFolderId ?? -1;
 
-        files.forEach(file => {
-            if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) return;
+        validFiles.forEach(file => {
             formData.append('files', file);
         });
-        this.mainService.uploadFile(formData,parentId).subscribe({
+
+        this.mainService.uploadFile(formData, parentId).subscribe({
             next: value => {
-                if(value.body){
+                if (value.body) {
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Lưu thành công',
                         life: 3000,
                         closable: true
-                    })
+                    });
                     this.loadFolder(this.currentFolderId);
                     files.length = 0;
                 }
             },
             error: err => {
                 let message = 'Có lỗi xảy ra';
-
-                // Backend trả JSON error
                 if (err?.error?.message) {
-                    message = err.error;
+                    message = err.error.message;
                 }
 
                 this.messageService.add({
@@ -189,6 +200,7 @@ export class GallerySearchComponent implements OnInit {
             }
         });
     }
+
 
 
     openCreateFolderDialog() {
