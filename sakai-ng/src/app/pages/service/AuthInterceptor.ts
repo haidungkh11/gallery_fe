@@ -31,7 +31,6 @@ export class AuthInterceptor implements HttpInterceptor {
 
         return next.handle(authReq).pipe(
             catchError(err => {
-                debugger;
                 if (err.status === 401 || err.status === 403) {
                     localStorage.clear();
                     this.router.navigate(['']);

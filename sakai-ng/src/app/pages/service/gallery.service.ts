@@ -106,6 +106,16 @@ export class GalleryService {
             tap(data => data),
             catchError(this.handleError));
     }
+    renameFolder(data: any): Observable<any> {
+        return this.httpClient.post(this.url + '/api/ledung/gallery/changeNameFolder', data, {
+            headers: this.apiCommonService.getHeaders(),
+            withCredentials: true,
+            observe: 'events',
+            responseType: 'json',
+        }).pipe(
+            tap(data => data),
+            catchError(this.handleError));
+    }
     uploadFile(data: FormData, parentId: number): Observable<any> {
         let headers = this.apiCommonService.getHeaders();
         headers = headers.set('ParentId', parentId.toString());

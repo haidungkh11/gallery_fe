@@ -1,7 +1,12 @@
-<p-toast />
+<p-toast></p-toast>
+
+<!-- Context menu đổi tên -->
+<p-contextMenu #cm [model]="contextMenuItems"></p-contextMenu>
+
 <div class="card">
+    <!-- ================= HEADER ================= -->
     <div class="header-container">
-        <!-- Row 1: Title -->
+        <!-- Row 1 -->
         <div class="header-top">
             <button
                 pButton
@@ -14,24 +19,31 @@
             <span class="font-semibold text-lg">📂 Thư viện ảnh</span>
         </div>
 
-        <!-- Row 2: Actions -->
+        <!-- Row 2 -->
         <div class="header-actions">
-            <!-- Nút bật chọn -->
             <p-button
                 *ngIf="!multiSelectMode"
                 icon="pi pi-check-square"
                 label="Xóa"
-                (click)="toggleMultiSelect()"
-                class="p-button-outlined">
+                class="p-button-outlined"
+                (click)="toggleMultiSelect()">
             </p-button>
 
             <ng-container *ngIf="multiSelectMode">
-                <p-button icon="pi pi-check" label="Chọn tất cả" class="p-button-text"
-                          (click)="selectAll()"></p-button>
+                <p-button
+                    icon="pi pi-check"
+                    label="Chọn tất cả"
+                    class="p-button-text"
+                    (click)="selectAll()">
+                </p-button>
 
-                <p-button icon="pi pi-times" label="Hủy" severity="secondary"
-                          class="p-button-text"
-                          (click)="toggleMultiSelect()"></p-button>
+                <p-button
+                    icon="pi pi-times"
+                    label="Hủy"
+                    severity="secondary"
+                    class="p-button-text"
+                    (click)="toggleMultiSelect()">
+                </p-button>
 
                 <p-button
                     icon="pi pi-trash"
@@ -63,89 +75,157 @@
         </div>
     </div>
 
-
-
-    <!-- Grid items -->
+    <!-- ================= GRID ================= -->
     <div class="grid">
         <div
             class="item relative cursor-pointer"
             *ngFor="let item of currentItems"
-            (click)="openItem(item)">
+            (click)="openItem(item)"
+            (contextmenu)="onRightClick($event, item)"
+            (touchstart)="onTouchStart(item)"
+            (touchend)="onTouchEnd()">
 
-            <!-- Checkbox chỉ hiện khi multiSelectMode = true -->
-            <div *ngIf="multiSelectMode" class="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 shadow-md">
+            <!-- Checkbox -->
+            <div *ngIf="multiSelectMode"
+                 class="absolute top-2 right-2 z-10 bg-white/80 rounded-full p-1 shadow-md">
                 <p-checkbox
                     [binary]="true"
                     [ngModel]="isSelected(item)"
-                    (ngModelChange)="toggleSelection(item)"
-                    [inputId]="'chk-' + item.id">
+                    (ngModelChange)="toggleSelection(item)">
                 </p-checkbox>
             </div>
 
-            <!-- Overlay nhẹ khi item được chọn -->
-            <div *ngIf="multiSelectMode && isSelected(item)"
-                 class="absolute inset-0 bg-blue-500/15 rounded-lg pointer-events-none"></div>
+            <!-- Overlay khi chọn -->
+            <div
+                *ngIf="multiSelectMode && isSelected(item)"
+                class="absolute inset-0 bg-blue-500/15 rounded-lg pointer-events-none">
+            </div>
 
+            <!-- Icon / Media -->
             <i *ngIf="item.type === 'FOLDER'" class="pi pi-folder folder-icon"></i>
-            <img *ngIf="item.type === 'IMAGE'" [src]="item.url" loading="lazy" class="thumb" />
-            <video *ngIf="item.type === 'VIDEO'" [src]="item.url" muted class="thumb"></video>
+
+            <img
+                *ngIf="item.type === 'IMAGE'"
+                [src]="item.url"
+                loading="lazy"
+                class="thumb" />
+
+            <video
+                *ngIf="item.type === 'VIDEO'"
+                [src]="item.url"
+                muted
+                class="thumb">
+            </video>
+
             <div class="name">{{ item.name }}</div>
         </div>
     </div>
 
-    <!-- Dialog tạo thư mục (giữ nguyên) -->
+    <!-- ================= PAGINATOR ================= -->
+    <p-paginator
+        [rows]="pageSize"
+        [totalRecords]="totalRecords"
+        [rowsPerPageOptions]="[40, 80, 120]"
+        (onPageChange)="onPageChange($event)"
+        [hidden]="navigationStack.length === 0">
+    </p-paginator>
+
+    <!-- ================= CREATE FOLDER ================= -->
     <p-dialog
         header="Tạo thư mục mới"
         [(visible)]="showCreateFolderDialog"
         [modal]="true"
         [style]="{ width: '420px' }"
-        [draggable]="true"
         [resizable]="false">
 
         <div class="p-fluid">
             <div class="field mt-4">
-                <label for="folderName" class="block text-lg font-medium mb-3">Tên thư mục</label>
+                <label class="block text-lg font-medium mb-3">Tên thư mục</label>
                 <input
                     pInputText
-                    id="folderName"
                     [(ngModel)]="newFolderName"
-                    placeholder="Nhập tên thư mục mới..."
+                    placeholder="Nhập tên thư mục..."
                     class="w-full p-inputtext-lg"
-                    autofocus
-                    style="height: 48px; font-size: 1.1rem;"
-                />
-                <small class="p-error block mt-2" *ngIf="folderNameError">
+                    autofocus />
+                <small class="p-error" *ngIf="folderNameError">
                     {{ folderNameError }}
                 </small>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
-            <div class="flex justify-content-end gap-3 mt-5">
-                <p-button label="Hủy" severity="secondary" text (click)="showCreateFolderDialog = false"></p-button>
-                <p-button label="Tạo thư mục" icon="pi pi-check" (click)="createFolder()"></p-button>
-            </div>
+            <p-button
+                label="Hủy"
+                severity="secondary"
+                text
+                (click)="showCreateFolderDialog = false">
+            </p-button>
+            <p-button
+                label="Tạo"
+                icon="pi pi-check"
+                (click)="createFolder()">
+            </p-button>
         </ng-template>
     </p-dialog>
 
-    <!-- Dialog xác nhận xóa -->
+    <!-- ================= RENAME FOLDER ================= -->
+    <p-dialog
+        header="Đổi tên thư mục"
+        [(visible)]="showRenameDialog"
+        [modal]="true"
+        [style]="{ width: '420px' }">
+
+        <div class="p-fluid">
+            <div class="field mt-4">
+                <label class="block font-medium mb-2">Tên mới</label>
+                <input
+                    pInputText
+                    [(ngModel)]="renameFolderName"
+                    autofocus />
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <p-button
+                label="Hủy"
+                severity="secondary"
+                text
+                (click)="showRenameDialog = false">
+            </p-button>
+            <p-button
+                label="Lưu"
+                icon="pi pi-check"
+                (click)="confirmRename()">
+            </p-button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- ================= DELETE CONFIRM ================= -->
     <p-dialog
         header="Xác nhận xóa"
         [(visible)]="showDeleteConfirm"
         [modal]="true"
-        [style]="{ width: '400px' }"
-        [closable]="false">
+        [closable]="false"
+        [style]="{ width: '400px' }">
 
-        <p>Bạn có chắc chắn muốn xóa <strong>{{ selectedItems.length }}</strong> mục đã chọn?</p>
-        <p class="text-red-500 mt-2">Hành động này không thể hoàn tác (trong dữ liệu tạm thời).</p>
+        <p>Bạn có chắc muốn xóa <strong>{{ selectedItems.length }}</strong> mục?</p>
 
         <ng-template pTemplate="footer">
-            <p-button label="Hủy" severity="secondary" (click)="cancelDelete()" [disabled]="deleteInProgress"></p-button>
-            <p-button label="Xóa" severity="danger" (click)="deleteSelected()" [loading]="deleteInProgress"></p-button>
+            <p-button
+                label="Hủy"
+                severity="secondary"
+                (click)="cancelDelete()">
+            </p-button>
+            <p-button
+                label="Xóa"
+                severity="danger"
+                (click)="deleteSelected()"
+                [loading]="deleteInProgress">
+            </p-button>
         </ng-template>
     </p-dialog>
 
-    <!-- Preview giữ nguyên -->
+    <!-- ================= PREVIEW ================= -->
     <app-gallery-detail
         [media]="selectedMedia"
         [(visible)]="previewVisible"

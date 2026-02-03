@@ -1,4 +1,4 @@
-import {Component, Injector, OnInit} from '@angular/core';
+import {Component, Injector, OnInit, ViewChild} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { FileUploadModule } from 'primeng/fileupload';
@@ -9,9 +9,11 @@ import { FormsModule } from '@angular/forms';
 import { GalleryDetailComponent } from "@/pages/gallery/src/lib/gallery-detail/gallery-detail.component";
 import { FileUploadHandlerEvent } from 'primeng/fileupload';
 import {GalleryService} from "@/pages/service/gallery.service";
-import {MessageService} from "primeng/api";
+import {MenuItem, MessageService} from "primeng/api";
 import {DialogService} from "primeng/dynamicdialog";
 import {Toast} from "primeng/toast";
+import {Paginator} from "primeng/paginator";
+import {ContextMenu, ContextMenuModule} from "primeng/contextmenu";
 
 interface ExplorerItem {
     id: number;
@@ -33,7 +35,9 @@ interface ExplorerItem {
         InputTextModule,
         CheckboxModule,          // Thêm
         FormsModule,
-        Toast
+        Toast,
+        Paginator,
+        ContextMenuModule
     ],
     templateUrl: './gallery-search.component.html',
     styleUrl: 'gallery-search.component.scss'
@@ -67,6 +71,26 @@ export class GallerySearchComponent implements OnInit {
 
     _querySearch: any = {};
 
+    page = 0;          // page index (0-based)
+    pageSize = 40;     // items mỗi trang
+    totalRecords = 0;  // tổng số item
+
+    // ===== CONTEXT MENU =====
+    contextMenuItems: MenuItem[] = [];
+    rightClickItem: ExplorerItem | null = null;
+
+// ===== RENAME =====
+    showRenameDialog = false;
+    renameFolderName = '';
+    renameTarget: ExplorerItem | null = null;
+
+// ===== LONG PRESS =====
+    private longPressTimer: any;
+    private readonly LONG_PRESS_DELAY = 600; // ms
+
+    @ViewChild('cm') contextMenu!: ContextMenu;
+
+
     constructor(
         public mainService: GalleryService,
         public messageService: MessageService,
@@ -76,7 +100,107 @@ export class GallerySearchComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.initContextMenu();
         this.loadFolder(null);
+    }
+
+    initContextMenu() {
+        this.contextMenuItems = [
+            {
+                label: 'Đổi tên',
+                icon: 'pi pi-pencil',
+                command: () => this.openRenameDialog(this.rightClickItem),
+                visible: false // sẽ bật động
+            }
+        ];
+    }
+
+    onRightClick(event: MouseEvent, item: ExplorerItem) {
+        event.preventDefault();
+        event.stopPropagation(); // ✅ thêm dòng này
+
+        if (item.type !== 'FOLDER') return;
+
+        this.rightClickItem = item;
+        this.contextMenuItems[0].visible = true;
+
+        this.contextMenu.show(event);
+    }
+
+
+
+    onTouchStart(item: ExplorerItem) {
+        if (item.type !== 'FOLDER') return;
+
+        this.longPressTimer = setTimeout(() => {
+            this.rightClickItem = item;
+            this.contextMenuItems[0].visible = true;
+
+            // fake event cho context menu
+            const fakeEvent = {
+                pageX: window.innerWidth / 2,
+                pageY: window.innerHeight / 2
+            } as MouseEvent;
+
+            this.contextMenu.show(fakeEvent);
+        }, this.LONG_PRESS_DELAY);
+    }
+
+    onTouchEnd() {
+        clearTimeout(this.longPressTimer);
+    }
+
+    openRenameDialog(item: ExplorerItem | null) {
+        if (!item) return;
+
+        this.renameTarget = item;
+        this.renameFolderName = item.name;
+        this.showRenameDialog = true;
+    }
+
+    confirmRename() {
+        debugger
+        if (!this.renameTarget) return;
+
+        const newName = this.renameFolderName.trim();
+        if (!newName) return;
+
+        const updated = {
+            ...this.renameTarget,
+            name: newName
+        };
+
+        this.mainService.renameFolder(updated).subscribe({
+            next: value => {
+                if (value.body) {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Đổi tên thành công',
+                        life: 3000
+                    });
+                    this.loadFolder(this.currentFolderId);
+                }
+            },
+            error: err => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Đổi tên thất bại',
+                    detail: err?.error?.message || 'Có lỗi xảy ra',
+                    life: 4000
+                });
+            }
+        });
+
+        this.showRenameDialog = false;
+        this.renameTarget = null;
+    }
+
+
+
+    onPageChange(event: any) {
+        this.page = event.page;
+        this.pageSize = event.rows;
+        this.loadFolder(this.currentFolderId);
     }
 
     loadFolder(folderId: number | null) {
@@ -85,6 +209,7 @@ export class GallerySearchComponent implements OnInit {
                next: value => {
                    if(value.body){
                        this.currentItems = value.body.data;
+                       this.totalRecords = value.body.data.totalElements;
                        this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
                    }
                }
@@ -92,10 +217,13 @@ export class GallerySearchComponent implements OnInit {
         }
         else {
             this._querySearch.parentId = folderId;
+            this._querySearch.page = this.page;
+            this._querySearch.size = this.pageSize;
             this.mainService.fetch(this._querySearch).subscribe({
                 next: value => {
                     if(value.body){
-                        this.currentItems = value.body.data;
+                        this.currentItems = value.body.data.content;
+                        this.totalRecords = value.body.data.totalElements;
                         this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
                     }
                 }
@@ -125,6 +253,7 @@ export class GallerySearchComponent implements OnInit {
         if (this.navigationStack.length === 0) return;
         const prev = this.navigationStack.pop() ?? null;
         this.currentFolderId = prev;
+        this.page = 0;
         this.loadFolder(prev);
     }
 
@@ -161,6 +290,7 @@ export class GallerySearchComponent implements OnInit {
                 life: 4000,
                 closable: true
             });
+            files.length = 0;
             return;
         }
 
