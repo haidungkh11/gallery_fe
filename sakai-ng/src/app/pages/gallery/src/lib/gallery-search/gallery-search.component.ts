@@ -88,7 +88,12 @@ export class GallerySearchComponent implements OnInit {
     private longPressTimer: any;
     private readonly LONG_PRESS_DELAY = 600; // ms
 
+
     @ViewChild('cm') contextMenu!: ContextMenu;
+
+    pageCache = new Map<number, ExplorerItem[]>();
+
+
 
 
     constructor(
@@ -200,40 +205,107 @@ export class GallerySearchComponent implements OnInit {
     onPageChange(event: any) {
         this.page = event.page;
         this.pageSize = event.rows;
-        this.loadFolder(this.currentFolderId);
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'   // bỏ nếu không muốn animation
-        });
+
+        // Nếu page đã cache → dùng ngay (instant)
+        const cached = this.pageCache.get(this.page);
+        if (cached) {
+            this.currentItems = cached;
+            this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
+
+            // preload page xung quanh
+            this.preloadSurroundingPages();
+        } else {
+            this.loadFolder(this.currentFolderId);
+        }
+
+        window.scrollTo(0, 0);
     }
 
+
+
     loadFolder(folderId: number | null) {
-        if(folderId == null){
+
+        if (folderId == null) {
             this.mainService.getList().subscribe({
-               next: value => {
-                   if(value.body){
-                       this.currentItems = value.body.data;
-                       this.totalRecords = value.body.data.totalElements;
-                       this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
-                   }
-               }
+                next: value => {
+                    if (value.body) {
+                        this.currentItems = value.body.data.content ?? value.body.data;
+                        this.totalRecords = value.body.data.totalElements ?? this.currentItems.length;
+
+                        this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
+
+                    }
+                }
             });
-        }
-        else {
+        } else {
             this._querySearch.parentId = folderId;
             this._querySearch.page = this.page;
             this._querySearch.size = this.pageSize;
+
             this.mainService.fetch(this._querySearch).subscribe({
                 next: value => {
-                    if(value.body){
+                    if (value.body) {
                         this.currentItems = value.body.data.content;
                         this.totalRecords = value.body.data.totalElements;
+
                         this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
+
+                        // ⭐ cache page hiện tại
+                        this.pageCache.set(this.page, this.currentItems);
+
+                        // ⭐ preload page trước + sau
+                        this.preloadSurroundingPages();
                     }
                 }
             });
         }
     }
+
+    preloadSurroundingPages() {
+        const pagesToPreload = [this.page - 1, this.page + 1];
+
+        pagesToPreload.forEach(p => {
+            if (p < 0) return;
+            if (this.pageCache.has(p)) return;
+            if (p * this.pageSize >= this.totalRecords) return;
+
+            const query = {
+                parentId: this.currentFolderId,
+                page: p,
+                size: this.pageSize
+            };
+
+            this.mainService.fetch(query).subscribe({
+                next: value => {
+                    if (value.body) {
+                        const items = value.body.data.content;
+                        this.pageCache.set(p, items);
+
+                        // preload ảnh vào browser cache
+                        this.preloadImages(items);
+                    }
+                }
+            });
+        });
+    }
+
+
+    preloadImages(items: ExplorerItem[]) {
+        items.forEach(i => {
+            if (i.type === 'IMAGE' && i.url) {
+                const img = new Image();
+                img.src = i.url;
+            }
+        });
+    }
+
+    trackById(index: number, item: ExplorerItem) {
+        return item.id;
+    }
+
+
+
+
 
     openItem(item: ExplorerItem) {
         if (this.multiSelectMode) {

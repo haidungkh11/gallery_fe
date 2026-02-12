@@ -79,7 +79,7 @@
     <div class="grid">
         <div
             class="item relative cursor-pointer"
-            *ngFor="let item of currentItems"
+            *ngFor="let item of currentItems; trackBy: trackById"
             (click)="openItem(item)"
             (contextmenu)="onRightClick($event, item)"
             (touchstart)="onTouchStart(item)"
@@ -108,6 +108,7 @@
                 *ngIf="item.type === 'IMAGE'"
                 [src]="item.url"
                 loading="lazy"
+                decoding="async"
                 class="thumb" />
 
             <video
