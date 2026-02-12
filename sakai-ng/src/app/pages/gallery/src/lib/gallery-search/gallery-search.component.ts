@@ -201,6 +201,10 @@ export class GallerySearchComponent implements OnInit {
         this.page = event.page;
         this.pageSize = event.rows;
         this.loadFolder(this.currentFolderId);
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'   // bỏ nếu không muốn animation
+        });
     }
 
     loadFolder(folderId: number | null) {
