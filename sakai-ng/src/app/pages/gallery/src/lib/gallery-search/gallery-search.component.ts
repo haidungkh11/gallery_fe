@@ -15,6 +15,7 @@ import {Toast} from "primeng/toast";
 import {Paginator} from "primeng/paginator";
 import {ContextMenu, ContextMenuModule} from "primeng/contextmenu";
 import {SkeletonModule} from "primeng/skeleton";
+import {Subscription} from "rxjs";
 
 interface ExplorerItem {
     id: number;
@@ -97,7 +98,7 @@ export class GallerySearchComponent implements OnInit {
 
     imageLoadedMap: Record<number, boolean> = {};
 
-
+    private currentRequest?: Subscription;
 
 
     constructor(
@@ -228,6 +229,10 @@ export class GallerySearchComponent implements OnInit {
 
 
     loadFolder(folderId: number | null) {
+
+        if (this.currentRequest) {
+            this.currentRequest.unsubscribe();
+        }
 
         if (folderId == null) {
             this.mainService.getList().subscribe({
