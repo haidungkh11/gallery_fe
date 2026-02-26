@@ -6,8 +6,7 @@
     [contentStyle]="{ overflow: 'hidden' }"
     (onHide)="close()">
 
-    <div class="preview-wrapper" (touchstart)="onTouchStart($event)" (touchmove)="onTouchMove($event)"
-         (touchend)="onTouchEnd($event)">
+    <div class="preview-wrapper">
         <!-- Nút Prev -->
         <button
             *ngIf="currentIndex > 0"
@@ -23,7 +22,10 @@
             *ngIf="media?.type === 'IMAGE'"
             [src]="media.url"
             class="preview-media"
-            #mediaElement
+            [style.transform]="'scale(' + scale + ')'"
+            (touchstart)="onTouchStart($event)"
+            (touchmove)="onTouchMove($event)"
+            (touchend)="onTouchEnd()"
         />
 
         <!-- VIDEO -->

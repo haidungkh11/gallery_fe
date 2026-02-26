@@ -98,6 +98,8 @@ export class GallerySearchComponent implements OnInit {
     imageLoadedMap: Record<number, boolean> = {};
 
 
+
+
     constructor(
         public mainService: GalleryService,
         public messageService: MessageService,

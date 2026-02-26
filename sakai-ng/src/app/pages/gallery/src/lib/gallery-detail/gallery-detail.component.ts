@@ -28,6 +28,12 @@ export class GalleryDetailComponent  {
     currentScale = 1;
     isPinching = false;
 
+    scale = 1;
+    startX = 0;
+    currentTranslateX = 0;
+    isZooming = false;
+
+
 
     close() {
         this.visibleChange.emit(false);
@@ -42,62 +48,59 @@ export class GalleryDetailComponent  {
 
     onTouchStart(event: TouchEvent) {
 
-        // 1 ngón -> swipe
-        if (event.touches.length === 1) {
-            this.touchStartX = event.touches[0].screenX;
+        if (event.touches.length === 2) {
+            this.isZooming = true;
+            this.initialDistance = this.getDistance(event.touches);
+            return;
         }
 
-        // 2 ngón -> zoom
-        if (event.touches.length === 2) {
-            this.isPinching = true;
-            this.initialDistance = this.getDistance(event);
+        if (this.scale === 1) {
+            this.startX = event.touches[0].clientX;
         }
     }
 
     onTouchMove(event: TouchEvent) {
 
+        // PINCH ZOOM
         if (event.touches.length === 2) {
-            event.preventDefault();
+            const newDistance = this.getDistance(event.touches);
+            this.scale = Math.max(1, newDistance / this.initialDistance);
+            return;
+        }
 
-            const newDistance = this.getDistance(event);
-            const scaleChange = newDistance / this.initialDistance;
-
-            this.currentScale *= scaleChange;
-
-            // Giới hạn zoom
-            this.currentScale = Math.min(Math.max(this.currentScale, 1), 4);
-
-            this.mediaElement.nativeElement.style.transform =
-                `scale(${this.currentScale})`;
-
-            this.initialDistance = newDistance;
+        // SWIPE chỉ khi không zoom
+        if (!this.isZooming && this.scale === 1) {
+            this.currentTranslateX =
+                event.touches[0].clientX - this.startX;
         }
     }
 
-    onTouchEnd(event: TouchEvent) {
+    onTouchEnd() {
 
-        if (this.isPinching) {
-            this.isPinching = false;
-            return; // không xử lý swipe nếu đang zoom
+        if (this.isZooming) {
+            this.isZooming = false;
+            return;
         }
 
-        const touchEndX = event.changedTouches[0].screenX;
-        const diff = this.touchStartX - touchEndX;
-        const threshold = 50;
-
-        if (Math.abs(diff) < threshold) return;
-
-        if (diff > 0 && this.currentIndex < this.mediaList.length - 1) {
-            this.goNext();
-        } else if (diff < 0 && this.currentIndex > 0) {
-            this.goPrev();
+        // chỉ swipe khi scale = 1
+        if (this.scale === 1) {
+            if (this.currentTranslateX > 80) {
+                this.prev.emit();
+            } else if (this.currentTranslateX < -80) {
+                this.next.emit();
+            }
         }
+
+        this.currentTranslateX = 0;
     }
 
-    getDistance(event: TouchEvent): number {
-        const dx = event.touches[0].clientX - event.touches[1].clientX;
-        const dy = event.touches[0].clientY - event.touches[1].clientY;
-        return Math.sqrt(dx * dx + dy * dy);
+
+
+    getDistance(touches: TouchList): number {
+        return Math.hypot(
+            touches[0].clientX - touches[1].clientX,
+            touches[0].clientY - touches[1].clientY
+        );
     }
 }
 
