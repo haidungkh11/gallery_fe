@@ -125,12 +125,27 @@
 
             </div>
 
-            <video
-                *ngIf="item.type === 'VIDEO'"
-                [src]="item.url"
-                muted
-                class="thumb">
-            </video>
+            <div *ngIf="item.type === 'VIDEO'" class="image-wrapper">
+
+                <!-- Skeleton -->
+                <p-skeleton
+                    *ngIf="!imageLoadedMap[item.id]"
+                    width="100%"
+                    height="150px">
+                </p-skeleton>
+
+                <!-- Video -->
+                <video
+                    [src]="item.url"
+                    muted
+                    preload="metadata"
+                    (loadeddata)="onImageLoad(item)"
+                    (error)="onImageError(item)"
+                    [class.loaded]="imageLoadedMap[item.id]"
+                    class="thumb">
+                </video>
+
+            </div>
 
             <div class="name">{{ item.name }}</div>
         </div>
