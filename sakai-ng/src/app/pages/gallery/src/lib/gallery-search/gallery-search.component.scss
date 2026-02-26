@@ -21,6 +21,16 @@
     margin-bottom: 6px;
 }
 
+.image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+}
+.thumb.loaded {
+    opacity: 1;
+}
+
 /* Row 2 – QUAN TRỌNG */
 .header-actions {
     display: flex;

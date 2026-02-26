@@ -104,12 +104,26 @@
             <!-- Icon / Media -->
             <i *ngIf="item.type === 'FOLDER'" class="pi pi-folder folder-icon"></i>
 
-            <img
-                *ngIf="item.type === 'IMAGE'"
-                [src]="item.url"
-                loading="lazy"
-                decoding="async"
-                class="thumb" />
+            <div *ngIf="item.type === 'IMAGE'" class="image-wrapper">
+
+                <!-- Skeleton -->
+                <p-skeleton
+                    *ngIf="!imageLoadedMap[item.id]"
+                    width="100%"
+                    height="150px">
+                </p-skeleton>
+
+                <!-- Ảnh -->
+                <img
+                    [src]="item.url"
+                    loading="lazy"
+                    decoding="async"
+                    (load)="onImageLoad(item)"
+                    (error)="onImageError(item)"
+                    [class.loaded]="imageLoadedMap[item.id]"
+                    class="thumb" />
+
+            </div>
 
             <video
                 *ngIf="item.type === 'VIDEO'"

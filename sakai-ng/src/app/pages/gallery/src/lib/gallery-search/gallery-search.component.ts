@@ -14,6 +14,7 @@ import {DialogService} from "primeng/dynamicdialog";
 import {Toast} from "primeng/toast";
 import {Paginator} from "primeng/paginator";
 import {ContextMenu, ContextMenuModule} from "primeng/contextmenu";
+import {SkeletonModule} from "primeng/skeleton";
 
 interface ExplorerItem {
     id: number;
@@ -37,7 +38,8 @@ interface ExplorerItem {
         FormsModule,
         Toast,
         Paginator,
-        ContextMenuModule
+        ContextMenuModule,
+        SkeletonModule
     ],
     templateUrl: './gallery-search.component.html',
     styleUrl: 'gallery-search.component.scss'
@@ -93,7 +95,7 @@ export class GallerySearchComponent implements OnInit {
 
     pageCache = new Map<number, ExplorerItem[]>();
 
-
+    imageLoadedMap: Record<number, boolean> = {};
 
 
     constructor(
@@ -233,7 +235,7 @@ export class GallerySearchComponent implements OnInit {
                         this.totalRecords = value.body.data.totalElements ?? this.currentItems.length;
 
                         this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
-
+                        this.imageLoadedMap = {};
                     }
                 }
             });
@@ -255,6 +257,8 @@ export class GallerySearchComponent implements OnInit {
 
                         // ⭐ preload page trước + sau
                         this.preloadSurroundingPages();
+
+                        this.imageLoadedMap = {};
                     }
                 }
             });
@@ -539,5 +543,13 @@ export class GallerySearchComponent implements OnInit {
 
     cancelDelete() {
         this.showDeleteConfirm = false;
+    }
+
+    onImageLoad(item: any) {
+        this.imageLoadedMap[item.id] = true;
+    }
+
+    onImageError(item: any) {
+        this.imageLoadedMap[item.id] = true; // tránh skeleton treo
     }
 }
