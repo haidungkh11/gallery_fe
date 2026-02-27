@@ -20,9 +20,9 @@
         <!-- IMAGE -->
         <img
             *ngIf="media?.type === 'IMAGE'"
+            #imageElement
             [src]="media.url"
             class="preview-media"
-            [style.transform]="'scale(' + scale + ')'"
             (touchstart)="onTouchStart($event)"
             (touchmove)="onTouchMove($event)"
             (touchend)="onTouchEnd()"

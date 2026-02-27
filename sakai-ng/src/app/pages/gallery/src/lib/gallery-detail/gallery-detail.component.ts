@@ -23,15 +23,24 @@ export class GalleryDetailComponent  {
 
     @ViewChild('mediaElement') mediaElement!: ElementRef;
 
-    touchStartX = 0;
     initialDistance = 0;
-    currentScale = 1;
-    isPinching = false;
 
     scale = 1;
     startX = 0;
     currentTranslateX = 0;
     isZooming = false;
+
+    @ViewChild('imageElement') imageElement!: ElementRef<HTMLImageElement>;
+
+
+    translateX = 0;
+    translateY = 0;
+
+
+    startY = 0;
+
+    isDragging = false;
+
 
 
 
@@ -54,6 +63,16 @@ export class GalleryDetailComponent  {
             return;
         }
 
+        if (event.touches.length === 1 && this.scale > 1) {
+            this.isDragging = true;
+
+            this.startX = event.touches[0].clientX;
+            this.startY = event.touches[0].clientY;
+
+            return;
+        }
+
+        // swipe khi chưa zoom
         if (this.scale === 1) {
             this.startX = event.touches[0].clientX;
         }
@@ -61,37 +80,66 @@ export class GalleryDetailComponent  {
 
     onTouchMove(event: TouchEvent) {
 
-        // PINCH ZOOM
+        event.preventDefault(); // 🔥 QUAN TRỌNG CHO IOS
+
+        const img = this.imageElement.nativeElement;
+
+        // ===== PINCH =====
         if (event.touches.length === 2) {
+
             const newDistance = this.getDistance(event.touches);
             this.scale = Math.max(1, newDistance / this.initialDistance);
+
+            img.style.transform =
+                `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+
             return;
         }
 
-        // SWIPE chỉ khi không zoom
-        if (!this.isZooming && this.scale === 1) {
+        // ===== DRAG =====
+        if (event.touches.length === 1 && this.scale > 1) {
+
+            const dx = event.touches[0].clientX - this.startX;
+            const dy = event.touches[0].clientY - this.startY;
+
+            this.translateX += dx;
+            this.translateY += dy;
+
+            this.startX = event.touches[0].clientX;
+            this.startY = event.touches[0].clientY;
+
+            img.style.transform =
+                `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+
+            return;
+        }
+
+        // ===== SWIPE =====
+        if (this.scale === 1) {
             this.currentTranslateX =
                 event.touches[0].clientX - this.startX;
         }
     }
+    updateTransform(img: HTMLElement) {
+        img.style.transform =
+            `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+    }
 
     onTouchEnd() {
 
-        if (this.isZooming) {
-            this.isZooming = false;
-            return;
-        }
+        this.isZooming = false;
+        this.isDragging = false;
 
-        // chỉ swipe khi scale = 1
         if (this.scale === 1) {
+
             if (this.currentTranslateX > 80) {
                 this.prev.emit();
             } else if (this.currentTranslateX < -80) {
                 this.next.emit();
             }
-        }
 
-        this.currentTranslateX = 0;
+            this.currentTranslateX = 0;
+        }
     }
 
 

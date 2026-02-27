@@ -30,6 +30,7 @@
     object-fit: contain;
     display: block;
     touch-action: none; // quan trọng để custom gesture
+    transition: transform 0.05s ease-out;
 }
 
 /* Nút prev / next */
@@ -70,9 +71,11 @@
     }
     .preview-media {
         height: 100%;
-        position: absolute;
+        position: relative;
         width: 100%;
         touch-action: none; // quan trọng để custom gesture
+        transition: transform 0.05s ease-out;
+        user-select: none;
 
     }
 
