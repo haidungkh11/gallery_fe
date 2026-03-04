@@ -1,4 +1,14 @@
-import {Component, Input, Output, EventEmitter, ElementRef, ViewChild} from '@angular/core';
+import {
+    Component,
+    Input,
+    Output,
+    EventEmitter,
+    ElementRef,
+    ViewChild,
+    OnInit,
+    OnChanges,
+    SimpleChanges
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import {ButtonDirective} from "primeng/button";
@@ -10,7 +20,7 @@ import {ButtonDirective} from "primeng/button";
     templateUrl: './gallery-detail.component.html',
     styleUrl: 'gallery-detail.component.scss'
 })
-export class GalleryDetailComponent  {
+export class GalleryDetailComponent implements OnInit, OnChanges{
 
     @Input() media: any;
     @Input() mediaList: any[] = [];    // List media từ parent
@@ -28,7 +38,7 @@ export class GalleryDetailComponent  {
     scale = 1;
     startX = 0;
     currentTranslateX = 0;
-    isZooming = false;
+
 
     @ViewChild('imageElement') imageElement!: ElementRef<HTMLImageElement>;
 
@@ -41,83 +51,115 @@ export class GalleryDetailComponent  {
 
     isDragging = false;
 
+    lastTap = 0;
+    doubleTapDelay = 300;
+
+    maxScale = 3;
 
 
+    lastTranslateX = 0;
+    lastTranslateY = 0;
+
+
+
+
+    ngOnInit() {
+
+    }
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes['media'] && !changes['media'].firstChange) {
+
+            // Đợi Angular render xong ảnh mới
+            setTimeout(() => {
+                this.resetTransform();
+            });
+        }
+    }
 
     close() {
         this.visibleChange.emit(false);
     }
     goPrev() {
+        this.resetTransform();
         this.prev.emit();
     }
 
     goNext() {
+        this.resetTransform();
         this.next.emit();
     }
 
     onTouchStart(event: TouchEvent) {
 
-        if (event.touches.length === 2) {
-            this.isZooming = true;
-            this.initialDistance = this.getDistance(event.touches);
+        const now = Date.now();
+
+        // DOUBLE TAP
+        if (event.touches.length === 1 && now - this.lastTap < this.doubleTapDelay) {
+            this.resetZoom();
+            this.lastTap = 0;
             return;
         }
 
-        if (event.touches.length === 1 && this.scale > 1) {
-            this.isDragging = true;
+        if (event.touches.length === 1) {
+            this.lastTap = now;
+        }
 
+        // PINCH START
+        if (event.touches.length === 2) {
+            this.initialDistance = this.getDistance(event.touches);
+            this.isDragging = false;
+            return;
+        }
+
+        // DRAG START
+        if (event.touches.length === 1 && this.scale > 1) {
             this.startX = event.touches[0].clientX;
             this.startY = event.touches[0].clientY;
-
-            return;
-        }
-
-        // swipe khi chưa zoom
-        if (this.scale === 1) {
-            this.startX = event.touches[0].clientX;
+            this.isDragging = true;
         }
     }
 
     onTouchMove(event: TouchEvent) {
 
-        event.preventDefault(); // 🔥 QUAN TRỌNG CHO IOS
-
         const img = this.imageElement.nativeElement;
 
-        // ===== PINCH =====
+        // PINCH
         if (event.touches.length === 2) {
 
             const newDistance = this.getDistance(event.touches);
-            this.scale = Math.max(1, newDistance / this.initialDistance);
+            const scaleChange = newDistance / this.initialDistance;
 
-            img.style.transform =
-                `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+            this.scale *= scaleChange;
+            this.scale = Math.max(1, Math.min(this.scale, this.maxScale));
 
+            this.initialDistance = newDistance;
+
+            this.updateTransform(img);
             return;
         }
 
-        // ===== DRAG =====
+        // DRAG
         if (event.touches.length === 1 && this.scale > 1) {
 
-            const dx = event.touches[0].clientX - this.startX;
-            const dy = event.touches[0].clientY - this.startY;
+            const touch = event.touches[0];
+
+            if (!this.isDragging) {
+                this.startX = touch.clientX;
+                this.startY = touch.clientY;
+                this.isDragging = true;
+                return;
+            }
+
+            const dx = touch.clientX - this.startX;
+            const dy = touch.clientY - this.startY;
 
             this.translateX += dx;
             this.translateY += dy;
 
-            this.startX = event.touches[0].clientX;
-            this.startY = event.touches[0].clientY;
+            this.startX = touch.clientX;
+            this.startY = touch.clientY;
 
-            img.style.transform =
-                `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
-
-            return;
-        }
-
-        // ===== SWIPE =====
-        if (this.scale === 1) {
-            this.currentTranslateX =
-                event.touches[0].clientX - this.startX;
+            this.updateTransform(img);
         }
     }
     updateTransform(img: HTMLElement) {
@@ -126,29 +168,44 @@ export class GalleryDetailComponent  {
     }
 
     onTouchEnd() {
-
-        this.isZooming = false;
         this.isDragging = false;
-
-        if (this.scale === 1) {
-
-            if (this.currentTranslateX > 80) {
-                this.prev.emit();
-            } else if (this.currentTranslateX < -80) {
-                this.next.emit();
-            }
-
-            this.currentTranslateX = 0;
-        }
     }
-
-
 
     getDistance(touches: TouchList): number {
         return Math.hypot(
             touches[0].clientX - touches[1].clientX,
             touches[0].clientY - touches[1].clientY
         );
+    }
+
+    resetZoom() {
+
+        this.scale = 1;
+        this.translateX = 0;
+        this.translateY = 0;
+        this.initialDistance = 0;
+        this.isDragging = false;
+
+        this.updateTransform(this.imageElement.nativeElement);
+    }
+
+
+    resetTransform() {
+
+        this.scale = 1;
+
+        this.translateX = 0;
+        this.translateY = 0;
+
+        this.lastTranslateX = 0;
+        this.lastTranslateY = 0;
+
+        this.currentTranslateX = 0;
+
+        if (this.imageElement) {
+            const img = this.imageElement.nativeElement;
+            img.style.transform = 'translate(0px, 0px) scale(1)';
+        }
     }
 }
 

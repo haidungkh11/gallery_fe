@@ -76,6 +76,7 @@
         touch-action: none; // quan trọng để custom gesture
         transition: transform 0.05s ease-out;
         user-select: none;
+        transform-origin: center center;
 
     }
 
