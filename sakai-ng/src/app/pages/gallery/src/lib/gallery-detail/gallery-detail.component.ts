@@ -165,8 +165,27 @@ export class GalleryDetailComponent implements OnInit, OnChanges{
         }
     }
     updateTransform(img: HTMLElement) {
+
+        const container = img.parentElement as HTMLElement;
+
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+
+        const imgWidth = img.clientWidth;
+        const imgHeight = img.clientHeight;
+
+        const scaledWidth = imgWidth * this.scale;
+        const scaledHeight = imgHeight * this.scale;
+
+        const maxX = Math.max(0, (scaledWidth - containerWidth) / 2);
+        const maxY = Math.max(0, (scaledHeight - containerHeight) / 2);
+
+        // 🔥 Giới hạn drag không cho lộ nền đen
+        this.translateX = Math.max(-maxX, Math.min(this.translateX, maxX));
+        this.translateY = Math.max(-maxY, Math.min(this.translateY, maxY));
+
         img.style.transform =
-            `translate3d(${this.translateX}px, ${this.translateY}px, 0) scale(${this.scale})`;
+            `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
     }
 
     onTouchEnd() {
