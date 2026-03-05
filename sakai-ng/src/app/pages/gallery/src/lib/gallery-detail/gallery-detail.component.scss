@@ -77,6 +77,8 @@
         transition: transform 0.05s ease-out;
         user-select: none;
         transform-origin: center center;
+        will-change: transform;
+        backface-visibility: hidden;
 
     }
 

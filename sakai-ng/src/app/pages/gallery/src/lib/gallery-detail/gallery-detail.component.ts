@@ -156,6 +156,8 @@ export class GalleryDetailComponent implements OnInit, OnChanges{
             this.translateX += dx;
             this.translateY += dy;
 
+            this.limitTranslate(img);
+
             this.startX = touch.clientX;
             this.startY = touch.clientY;
 
@@ -164,7 +166,7 @@ export class GalleryDetailComponent implements OnInit, OnChanges{
     }
     updateTransform(img: HTMLElement) {
         img.style.transform =
-            `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+            `translate3d(${this.translateX}px, ${this.translateY}px, 0) scale(${this.scale})`;
     }
 
     onTouchEnd() {
@@ -206,6 +208,23 @@ export class GalleryDetailComponent implements OnInit, OnChanges{
             const img = this.imageElement.nativeElement;
             img.style.transform = 'translate(0px, 0px) scale(1)';
         }
+    }
+
+    limitTranslate(img: HTMLImageElement) {
+
+        const rect = img.getBoundingClientRect();
+
+        const container = img.parentElement!;
+        const containerRect = container.getBoundingClientRect();
+
+        const scaledWidth = rect.width;
+        const scaledHeight = rect.height;
+
+        const maxX = (scaledWidth - containerRect.width) / 2;
+        const maxY = (scaledHeight - containerRect.height) / 2;
+
+        this.translateX = Math.min(maxX, Math.max(-maxX, this.translateX));
+        this.translateY = Math.min(maxY, Math.max(-maxY, this.translateY));
     }
 }
 
