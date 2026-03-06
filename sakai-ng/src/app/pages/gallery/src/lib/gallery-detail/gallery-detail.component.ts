@@ -166,23 +166,22 @@ export class GalleryDetailComponent implements OnInit, OnChanges{
     }
     updateTransform(img: HTMLElement) {
 
-        const container = img.parentElement as HTMLElement;
+        const wrapper = img.parentElement as HTMLElement;
 
-        const containerWidth = container.clientWidth;
-        const containerHeight = container.clientHeight;
+        const wrapperWidth = wrapper.clientWidth;
+        const wrapperHeight = wrapper.clientHeight;
 
-        const imgWidth = img.clientWidth;
-        const imgHeight = img.clientHeight;
+        const imgWidth = img.clientWidth * this.scale;
+        const imgHeight = img.clientHeight * this.scale;
 
-        const scaledWidth = imgWidth * this.scale;
-        const scaledHeight = imgHeight * this.scale;
+        const maxX = Math.max(0, (imgWidth - wrapperWidth) / 2);
+        const maxY = Math.max(0, (imgHeight - wrapperHeight) / 2);
 
-        const maxX = Math.max(0, (scaledWidth - containerWidth) / 2);
-        const maxY = Math.max(0, (scaledHeight - containerHeight) / 2);
+        if (this.translateX > maxX) this.translateX = maxX;
+        if (this.translateX < -maxX) this.translateX = -maxX;
 
-        // 🔥 Giới hạn drag không cho lộ nền đen
-        this.translateX = Math.max(-maxX, Math.min(this.translateX, maxX));
-        this.translateY = Math.max(-maxY, Math.min(this.translateY, maxY));
+        if (this.translateY > maxY) this.translateY = maxY;
+        if (this.translateY < -maxY) this.translateY = -maxY;
 
         img.style.transform =
             `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;

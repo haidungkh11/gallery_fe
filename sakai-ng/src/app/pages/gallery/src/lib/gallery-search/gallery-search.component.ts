@@ -369,11 +369,11 @@ export class GallerySearchComponent implements OnInit {
         );
 
         // Giới hạn tối đa 10 file
-        if (validFiles.length > 10) {
+        if (validFiles.length > 60) {
             this.messageService.add({
                 severity: 'warn',
                 summary: 'Quá số lượng',
-                detail: 'Chỉ được upload tối đa 10 ảnh hoặc 10 video',
+                detail: 'Chỉ được upload tối đa 60 ảnh hoặc 60 video',
                 life: 4000,
                 closable: true
             });
