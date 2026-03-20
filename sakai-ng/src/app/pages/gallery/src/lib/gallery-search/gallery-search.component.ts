@@ -397,6 +397,8 @@ export class GallerySearchComponent implements OnInit {
                         life: 3000,
                         closable: true
                     });
+                    this.pageCache.clear();
+                    this.page = 0;
                     this.loadFolder(this.currentFolderId);
                     files.length = 0;
                 }
