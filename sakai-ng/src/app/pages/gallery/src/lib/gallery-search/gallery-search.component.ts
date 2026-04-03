@@ -229,44 +229,51 @@ export class GallerySearchComponent implements OnInit {
 
 
     loadFolder(folderId: number | null) {
+        this.currentFolderId = folderId;
 
-        if (this.currentRequest) {
-            this.currentRequest.unsubscribe();
-        }
+        // reset UI state trước
+        this.currentItems = [];
+        this.mediaList = [];
+        this.imageLoadedMap = {};
+
+        // hủy request cũ
+        this.currentRequest?.unsubscribe();
 
         if (folderId == null) {
-            this.mainService.getList().subscribe({
+            this.currentRequest = this.mainService.getList().subscribe({
                 next: value => {
-                    if (value.body) {
-                        this.currentItems = value.body.data.content ?? value.body.data;
-                        this.totalRecords = value.body.data.totalElements ?? this.currentItems.length;
+                    if (!value.body) return;
 
-                        this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
-                        this.imageLoadedMap = {};
-                    }
+                    this.currentItems = value.body.data.content ?? value.body.data;
+                    this.totalRecords =
+                        value.body.data.totalElements ?? this.currentItems.length;
+
+                    this.mediaList = this.currentItems.filter(
+                        i => i.type === 'IMAGE' || i.type === 'VIDEO'
+                    );
                 }
             });
+
         } else {
-            this._querySearch.parentId = folderId;
-            this._querySearch.page = this.page;
-            this._querySearch.size = this.pageSize;
+            const query = {
+                parentId: folderId,
+                page: this.page,
+                size: this.pageSize
+            };
 
-            this.mainService.fetch(this._querySearch).subscribe({
+            this.currentRequest = this.mainService.fetch(query).subscribe({
                 next: value => {
-                    if (value.body) {
-                        this.currentItems = value.body.data.content;
-                        this.totalRecords = value.body.data.totalElements;
+                    if (!value.body) return;
 
-                        this.mediaList = this.currentItems.filter(i => i.type === 'IMAGE' || i.type === 'VIDEO');
+                    this.currentItems = value.body.data.content;
+                    this.totalRecords = value.body.data.totalElements;
 
-                        // ⭐ cache page hiện tại
-                        this.pageCache.set(this.page, this.currentItems);
+                    this.mediaList = this.currentItems.filter(
+                        i => i.type === 'IMAGE' || i.type === 'VIDEO'
+                    );
 
-                        // ⭐ preload page trước + sau
-                        this.preloadSurroundingPages();
-
-                        this.imageLoadedMap = {};
-                    }
+                    this.pageCache.set(this.page, [...this.currentItems]);
+                    this.preloadSurroundingPages();
                 }
             });
         }
@@ -400,7 +407,7 @@ export class GallerySearchComponent implements OnInit {
                     this.pageCache.clear();
                     this.page = 0;
                     this.loadFolder(this.currentFolderId);
-                    files.length = 0;
+                    //files.length = 0;
                 }
             },
             error: err => {
