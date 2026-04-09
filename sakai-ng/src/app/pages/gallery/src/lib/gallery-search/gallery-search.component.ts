@@ -15,7 +15,7 @@ import {Toast} from "primeng/toast";
 import {Paginator} from "primeng/paginator";
 import {ContextMenu, ContextMenuModule} from "primeng/contextmenu";
 import {SkeletonModule} from "primeng/skeleton";
-import {Subscription} from "rxjs";
+import {from, mergeMap, Subscription, toArray} from "rxjs";
 
 interface ExplorerItem {
     id: number;
@@ -138,7 +138,6 @@ export class GallerySearchComponent implements OnInit {
     }
 
 
-
     onTouchStart(item: ExplorerItem) {
         if (item.type !== 'FOLDER') return;
 
@@ -206,7 +205,6 @@ export class GallerySearchComponent implements OnInit {
     }
 
 
-
     onPageChange(event: any) {
         this.page = event.page;
         this.pageSize = event.rows;
@@ -225,7 +223,6 @@ export class GallerySearchComponent implements OnInit {
 
         window.scrollTo(0, 0);
     }
-
 
 
     loadFolder(folderId: number | null) {
@@ -366,69 +363,6 @@ export class GallerySearchComponent implements OnInit {
     }
 
 
-    uploadFiles(event: FileUploadHandlerEvent): void {
-        const files = event.files as File[];
-        if (!files?.length) return;
-
-        // Chỉ lấy image / video
-        const validFiles = files.filter(file =>
-            file.type.startsWith('image/') || file.type.startsWith('video/')
-        );
-
-        // Giới hạn tối đa 10 file
-        if (validFiles.length > 60) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Quá số lượng',
-                detail: 'Chỉ được upload tối đa 60 ảnh hoặc 60 video',
-                life: 4000,
-                closable: true
-            });
-            files.length = 0;
-            return;
-        }
-
-        const formData = new FormData();
-        let parentId = this.currentFolderId ?? -1;
-
-        validFiles.forEach(file => {
-            formData.append('files', file);
-        });
-
-        this.mainService.uploadFile(formData, parentId).subscribe({
-            next: value => {
-                if (value.body) {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Lưu thành công',
-                        life: 3000,
-                        closable: true
-                    });
-                    this.pageCache.clear();
-                    this.page = 0;
-                    this.loadFolder(this.currentFolderId);
-                    //files.length = 0;
-                }
-            },
-            error: err => {
-                let message = 'Có lỗi xảy ra';
-                if (err?.error?.message) {
-                    message = err.error.message;
-                }
-
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Upload không thành công',
-                    detail: message,
-                    life: 4000,
-                    closable: true
-                });
-            }
-        });
-    }
-
-
-
     openCreateFolderDialog() {
         this.newFolderName = '';
         this.folderNameError = '';
@@ -451,7 +385,7 @@ export class GallerySearchComponent implements OnInit {
 
         this.mainService.save(newFolder).subscribe({
             next: value => {
-                if(value.body){
+                if (value.body) {
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Lưu thành công',
@@ -521,7 +455,7 @@ export class GallerySearchComponent implements OnInit {
 
         this.mainService.deleteItem(this.selectedItems).subscribe({
             next: value => {
-                if(value.body){
+                if (value.body) {
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Xóa thành công',
@@ -567,5 +501,57 @@ export class GallerySearchComponent implements OnInit {
 
     onImageError(item: any) {
         this.imageLoadedMap[item.id] = true; // tránh skeleton treo
+    }
+
+    uploadFiles(event: FileUploadHandlerEvent): void {
+        const files = event.files as File[];
+        if (!files?.length) return;
+
+        const validFiles = files.filter(file =>
+            file.type.startsWith('image/') || file.type.startsWith('video/')
+        );
+
+        const parentId = this.currentFolderId ?? -1;
+
+        // chia batch 10 file
+        const batchSize = 10;
+        const batches: File[][] = [];
+
+        for (let i = 0; i < validFiles.length; i += batchSize) {
+            batches.push(validFiles.slice(i, i + batchSize));
+        }
+
+        from(batches).pipe(
+            // chạy song song tối đa 3 request
+            mergeMap(batch => {
+                const formData = new FormData();
+
+                batch.forEach(file => {
+                    formData.append('files', file);
+                });
+
+                return this.mainService.uploadFile(formData, parentId);
+            }, 3), // ⭐ max concurrency = 3
+            toArray()
+        ).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Upload thành công',
+                    life: 3000
+                });
+
+                this.pageCache.clear();
+                this.page = 0;
+                this.loadFolder(this.currentFolderId);
+            },
+            error: err => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Upload lỗi',
+                    detail: err?.error?.message || 'Có lỗi xảy ra'
+                });
+            }
+        });
     }
 }
